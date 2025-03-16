@@ -6,13 +6,13 @@ import triton.language as tl
 DEVICE = torch.device('cuda:0')
 
 @triton.jit
-def add_kernel(x_ptr,  # *Pointer* to first input vector.
-               y_ptr,  # *Pointer* to second input vector.
-               output_ptr,  # *Pointer* to output vector.
-               n_elements,  # Size of the vector.
+def add_kernel(x_ptr: tl.tensor,  # *Pointer* to first input vector.
+               y_ptr: tl.tensor,  # *Pointer* to second input vector.
+               output_ptr: tl.tensor,  # *Pointer* to output vector.
+               n_elements: tl.int32,  # Size of the vector.
                BLOCK_SIZE: tl.constexpr,  # Number of elements each program should process.
                # NOTE: `constexpr` so it can be used as a shape value.
-               ):
+               ) -> None:
     # There are multiple 'programs' processing different data. We identify which program
     # we are here:
     pid = tl.program_id(axis=0)  # We use a 1D launch grid scdo axis is 0.
@@ -26,7 +26,6 @@ def add_kernel(x_ptr,  # *Pointer* to first input vector.
     mask = offsets < n_elements
     # Load x and y from DRAM, masking out any extra elements in case the input is not a
     # multiple of the block size.
-    print(type(x_ptr), type(offsets))
     x = tl.load(x_ptr + offsets, mask=mask)
     y = tl.load(y_ptr + offsets, mask=mask)
     output = x + y
